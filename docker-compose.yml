@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  postgres:
+    container_name: api-server-database
+    image: postgres:10.10-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: api_server
+      POSTGRES_USER: davidm
+      POSTGRES_PASSWORD: 123456
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      retries: 5
+      timeout: 3s
+    ports:
+      - 5432:5432
+    logging:
+      driver: none
+
+  api_server:
+    container_name: api-server
+    image: api-server:latest
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/1/status"]
+      interval: 10s
+      retries: 5
+    environment: 
+      - DATABASE_HOST=postgres
+      - DATABASE_USER=davidm
+      - DATABASE_PASSWORD=123456
+      - DATABASE_NAME=api_server
+      - DATABASE_PORT=5432
+      - APP_ENV=local
+      - APP_NAME=rest_api
+      - DOTENV_PATH=/app/.env.local
+      - PORT=8000
+      - TZ=America/Sao_Paulo
+    depends_on:
+      - postgres
+
+  # redis:
+  #   container_name: salesforce-middleware-redis
+  #   image: bitnami/redis:5.0
+  #   environment:
+  #     # ALLOW_EMPTY_PASSWORD is recommended only for development.
+  #     - ALLOW_EMPTY_PASSWORD=yes
+  #     - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     retries: 5
+  #     timeout: 3s
+  #   ports:
+  #     - 6379:6379
+  #   volumes:
+  #     - 'redis_data:/bitnami/redis/data'
